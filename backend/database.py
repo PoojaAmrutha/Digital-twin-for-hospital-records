@@ -16,7 +16,7 @@ load_dotenv()
 #DATABASE_URL = "sqlite:///./healthwatch.db"
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "sqlite:///./healthwatch.db"
+    "sqlite:///./healthwatch_v2.db"
 )
 
 # Create database engine

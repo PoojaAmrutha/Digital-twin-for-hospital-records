@@ -19,6 +19,7 @@ class User(Base):
     age = Column(Integer)
     gender = Column(String(10))
     user_type = Column(String(50), default="patient")  # 'patient' or 'doctor'
+    password_hash = Column(String(255), nullable=True) # Check note below regarding migration
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -138,3 +139,77 @@ class DoctorPatientAssignment(Base):
     
     def __repr__(self):
         return f"<Assignment(doctor_id={self.doctor_id}, patient_id={self.patient_id})>"
+
+
+class MedicalRecord(Base):
+    """
+    Medical Record model - stores unstructured text data
+    """
+    __tablename__ = "medical_records"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    doctor_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Creator
+    
+    record_type = Column(String(50), nullable=False) # 'note', 'lab_report', 'imaging', 'discharge_summary'
+    content = Column(Text, nullable=False) # Unstructured text
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    version = Column(Integer, default=1)
+    
+    # Relationships
+    user = relationship("User", foreign_keys=[user_id], backref="medical_records")
+    doctor = relationship("User", foreign_keys=[doctor_id])
+    entities = relationship("EntityExtraction", back_populates="record", cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<MedicalRecord(id={self.id}, type='{self.record_type}', user_id={self.user_id})>"
+
+
+class EntityExtraction(Base):
+    """
+    Entity Extraction model - stores structured entities extracted from medical records by LLM
+    """
+    __tablename__ = "entity_extractions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    record_id = Column(Integer, ForeignKey("medical_records.id"), nullable=False, index=True)
+    
+    entity_type = Column(String(50), nullable=False) # 'diagnosis', 'medication', 'symptom'
+    entity_value = Column(String(255), nullable=False)
+    confidence_score = Column(Float, nullable=False)
+    
+    # Metadata
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationship
+    record = relationship("MedicalRecord", back_populates="entities")
+
+    def __repr__(self):
+        return f"<Entity(type='{self.entity_type}', value='{self.entity_value}')>"
+
+
+class AuditLog(Base):
+    """
+    Audit Log model - tracks all data changes for compliance
+    """
+    __tablename__ = "audit_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Who made the change
+    target_id = Column(Integer, nullable=True) # ID of the modified record
+    target_table = Column(String(50), nullable=False) # Table name
+    
+    action = Column(String(20), nullable=False) # 'create', 'update', 'delete'
+    old_value = Column(Text, nullable=True)
+    new_value = Column(Text, nullable=True)
+    
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    # Relationship
+    user = relationship("User")
+
+    def __repr__(self):
+        return f"<AuditLog(action='{self.action}', table='{self.target_table}', user_id={self.user_id})>"

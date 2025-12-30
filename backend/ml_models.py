@@ -8,7 +8,7 @@ from sklearn.ensemble import IsolationForest, RandomForestClassifier, GradientBo
 from sklearn.preprocessing import StandardScaler
 import joblib
 import os
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any, List
 
 
 class AnomalyDetector:
@@ -396,3 +396,68 @@ risk_predictor = RiskPredictor()
 MODEL_PATH = "models/anomaly_detector.pkl"
 if os.path.exists(MODEL_PATH):
     anomaly_detector.load(MODEL_PATH)
+
+
+class ReadmissionRiskModel:
+    """
+    Predicts risk of hospital readmission within 30 days
+    """
+    def __init__(self):
+        self.is_trained = False
+        
+    def predict(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Predict readmission risk
+        Args:
+            patient_data: Dict containing age, recent_admissions, chronic_conditions
+        """
+        # Mock prediction logic based on rules
+        base_risk = 0.1
+        reasoning = []
+        
+        age = patient_data.get('age', 0)
+        if age > 80:
+            base_risk += 0.3
+            reasoning.append("Advanced age (>80)")
+        elif age > 65:
+            base_risk += 0.15
+            reasoning.append("Senior age (>65)")
+            
+        recent_admissions = patient_data.get('recent_admissions', 0)
+        if recent_admissions > 2:
+            base_risk += 0.4
+            reasoning.append("High frequency of recent admissions")
+        elif recent_admissions > 0:
+            base_risk += 0.2
+            reasoning.append("Prior admission history")
+            
+        comorbidities = patient_data.get('comorbidities', [])
+        if len(comorbidities) >= 3:
+            base_risk += 0.2
+            reasoning.append("Multiple comorbidities")
+            
+        risk_score = min(0.95, base_risk)
+        
+        return {
+            "readmission_probability": round(risk_score, 2),
+            "risk_level": "High" if risk_score > 0.5 else "Low",
+            "reasoning": reasoning
+        }
+
+class TreatmentResponseModel:
+    """
+    Predicts probability of treatment success based on patient profile
+    """
+    def predict_success(self, treatment: str, patient_conditions: List[str]) -> float:
+        # Mock logic
+        # Real implementation would use historical data
+        base_success = 0.7
+        
+        if "Diabetes" in patient_conditions and treatment == "Steroids":
+            base_success -= 0.3 # Contraindicated
+            
+        return round(base_success, 2)
+
+# Initialize new models
+readmission_model = ReadmissionRiskModel()
+treatment_model = TreatmentResponseModel()

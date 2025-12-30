@@ -1,109 +1,191 @@
-// ============================================================================
-// FILE: frontend/src/components/patientdashboard.js
-// Patient Dashboard Component
-// ============================================================================
-
 import React from 'react';
-import { Heart, Droplet, Activity, TrendingUp } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { Heart, Activity, Thermometer, User, Clock, Flame, Footprints, Moon, AlertOctagon } from 'lucide-react';
+import Card from './ui/Card';
+import StatCard from './ui/StatCard';
+import SymptomChatbot from './SymptomChatbot';
 
-const VitalsCard = ({ title, value, unit, icon: Icon, color }) => {
-  const colorClasses = {
-    red: 'from-red-50 to-red-100 text-red-700',
-    blue: 'from-blue-50 to-blue-100 text-blue-700',
-    orange: 'from-orange-50 to-orange-100 text-orange-700',
-    purple: 'from-purple-50 to-purple-100 text-purple-700',
-  };
-
+const PatientDashboard = ({ user, vitals, healthScore, alerts, historicalData, onVitalsUpdate }) => {
   return (
-    <div className={`bg-gradient-to-br ${colorClasses[color]} p-4 rounded-lg shadow`}>
-      <div className="flex items-center justify-between">
-        <Icon size={32} />
-        <span className="text-2xl font-bold">
-          {typeof value === 'number' ? value.toFixed(1) : value}
-        </span>
-      </div>
-      <p className="text-sm text-gray-600 mt-2">{title}</p>
-      {unit && <p className="text-xs text-gray-500">{unit}</p>}
-    </div>
-  );
-};
+    <div className="space-y-6 animate-fade-in pb-10">
+      {/* Symptom Chatbot */}
+      <SymptomChatbot user={user} onVitalsUpdate={onVitalsUpdate} />
 
-const PatientDashboard = ({
-  vitals,
-  healthScore,
-  alerts,
-  historicalData,
-  currentUser,
-  onDismissAlert
-}) => {
-  const getScoreColor = (score) => {
-    if (score >= 80) return 'text-green-600';
-    if (score >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  return (
-    <div className="space-y-6 fade-in">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Health Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {currentUser.name}</p>
-        </div>
-        <div className={`text-4xl font-bold ${getScoreColor(healthScore)}`}>
-          {healthScore}/100
-          <p className="text-sm text-gray-600">Health Score</p>
-        </div>
-      </div>
-
-      {/* Real-time Vitals Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <VitalsCard
+      {/* Header Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard
           title="Heart Rate"
-          value={vitals.heartRate}
-          unit="bpm"
+          value={`${vitals.heartRate} bpm`}
           icon={Heart}
-          color="red"
+          color="rose"
+          trend="+2%"
+          trendUp={true}
+          subtitle="Normal resting rate"
         />
-        <VitalsCard
+        <StatCard
           title="Blood Oxygen"
-          value={vitals.spo2}
-          unit="%"
-          icon={Droplet}
-          color="blue"
-        />
-        <VitalsCard
-          title="Temperature"
-          value={vitals.temperature}
-          unit="°C"
+          value={`${vitals.spo2}%`}
           icon={Activity}
-          color="orange"
+          color="cyan"
+          trend="Stable"
+          subtitle="Optimal saturation"
         />
-        <VitalsCard
+        <StatCard
+          title="Temperature"
+          value={`${vitals.temperature}°C`}
+          icon={Thermometer}
+          color="amber"
+          trend="-0.1"
+          subtitle="Body temperature"
+        />
+        <StatCard
           title="Stress Level"
-          value={vitals.stress}
-          unit="/5"
-          icon={TrendingUp}
-          color="purple"
+          value={vitals.stress <= 3 ? "Low" : "Moderate"}
+          icon={User}
+          color="violet"
+          trend="Improving"
+          trendUp={false}
+          subtitle="Daily average"
         />
       </div>
 
-      {/* Activity Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-          <p className="text-gray-600 text-sm">Steps Today</p>
-          <p className="text-3xl font-bold text-gray-800">{vitals.steps.toLocaleString()}</p>
-          <p className="text-xs text-green-600 mt-1">Target: 10,000</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Chart Section */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="h-[400px]">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white">Heart Rate History</h3>
+                <p className="text-sm text-gray-400">Real-time continuous monitoring (Last 20 readings)</p>
+              </div>
+              <div className="flex gap-2">
+                {['1H', '24H', '1W'].map(p => (
+                  <button key={p} className="px-3 py-1 text-xs font-medium rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+                    {p}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={historicalData}>
+                  <defs>
+                    <linearGradient id="colorHr" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
+                    dataKey="time"
+                    stroke="#475569"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis
+                    stroke="#475569"
+                    fontSize={12}
+                    domain={['dataMin - 10', 'dataMax + 10']}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: '12px', border: '1px solid #334155', color: '#fff' }}
+                    itemStyle={{ color: '#fff' }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="hr"
+                    stroke="#f43f5e"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorHr)"
+                    animationDuration={1000}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="flex items-center gap-4 bg-gray-900/60 transition-transform hover:-translate-y-1">
+              <div className="p-3 bg-purple-500/20 rounded-full text-purple-400">
+                <Footprints size={24} />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">Steps</p>
+                <p className="text-2xl font-bold text-white">{vitals.steps}</p>
+              </div>
+            </Card>
+            <Card className="flex items-center gap-4 bg-gray-900/60 transition-transform hover:-translate-y-1">
+              <div className="p-3 bg-orange-500/20 rounded-full text-orange-400">
+                <Flame size={24} />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">Calories</p>
+                <p className="text-2xl font-bold text-white">{vitals.calories}</p>
+              </div>
+            </Card>
+            <Card className="flex items-center gap-4 bg-gray-900/60 transition-transform hover:-translate-y-1">
+              <div className="p-3 bg-indigo-500/20 rounded-full text-indigo-400">
+                <Moon size={24} />
+              </div>
+              <div>
+                <p className="text-gray-400 text-sm">Sleep</p>
+                <p className="text-2xl font-bold text-white">{vitals.sleepHours}h</p>
+              </div>
+            </Card>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-orange-500">
-          <p className="text-gray-600 text-sm">Calories Burned</p>
-          <p className="text-3xl font-bold text-gray-800">{vitals.calories}</p>
-          <p className="text-xs text-orange-600 mt-1">Target: 2,200</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border-l-4 border-indigo-500">
-          <p className="text-gray-600 text-sm">Sleep Last Night</p>
-          <p className="text-3xl font-bold text-gray-800">{vitals.sleepHours}h</p>
-          <p className="text-xs text-indigo-600 mt-1">Target: 7-9h</p>
+
+        {/* Right Sidebar: Health Score & Alerts */}
+        <div className="space-y-6">
+          {/* Health Score Circle */}
+          <Card className="text-center relative overflow-hidden bg-gradient-to-b from-gray-800/80 to-gray-900/80 border-gray-700">
+            <h3 className="text-lg font-bold text-gray-200 mb-6">Overall Health Score</h3>
+            <div className="relative w-48 h-48 mx-auto mb-4 flex items-center justify-center">
+              {/* SVG Progress Circle would go here, simpler div for now */}
+              <div className={`w-full h-full rounded-full border-[12px] ${healthScore > 80 ? 'border-emerald-500/20' : 'border-yellow-500/20'} flex items-center justify-center relative`}>
+                <div className={`absolute inset-0 rounded-full border-[12px] ${healthScore > 80 ? 'border-emerald-500' : 'border-yellow-500'} border-t-transparent animate-spin-slow`} style={{ transform: `rotate(${healthScore * 3.6}deg)` }}></div>
+                <div className="text-center z-10">
+                  <span className={`text-5xl font-bold ${healthScore > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{healthScore}</span>
+                  <p className="text-gray-400 text-sm mt-1">/ 100</p>
+                </div>
+              </div>
+              <div className="absolute inset-0 rounded-full bg-emerald-500/5 blur-xl"></div>
+            </div>
+            <p className="text-sm text-gray-400 leading-relaxed">
+              Your vitals are currently <span className="text-emerald-400 font-bold">optimal</span>. Keep up the good work!
+            </p>
+          </Card>
+
+          {/* Alerts Section */}
+          <div>
+            <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+              <AlertOctagon size={18} className="text-amber-400" />
+              Recent Alerts
+            </h3>
+            <div className="space-y-3">
+              {alerts.length > 0 ? alerts.map(alert => (
+                <div key={alert.id} className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-start gap-3 backdrop-blur-md">
+                  <div className="bg-red-500/20 p-2 rounded-lg text-red-400 mt-1">
+                    <AlertOctagon size={16} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-red-200 text-sm">{alert.title}</h4>
+                    <p className="text-xs text-red-300/80 mt-1 leading-relaxed">{alert.message}</p>
+                    <p className="text-[10px] text-red-400/60 mt-2 font-mono uppercase tracking-widest">{alert.time}</p>
+                  </div>
+                </div>
+              )) : (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-xl text-center">
+                  <p className="text-emerald-400 font-medium">No active alerts</p>
+                  <p className="text-xs text-emerald-500/60 mt-1">System monitoring active</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

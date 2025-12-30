@@ -4,7 +4,7 @@
 # ============================================================================
 
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -19,6 +19,7 @@ class UserCreate(BaseModel):
     age: int = Field(..., ge=0, le=150)
     gender: str = Field(..., pattern="^(M|F|Other)$")
     user_type: str = Field(default="patient", pattern="^(patient|doctor)$")
+    password: str = Field(..., min_length=6, description="User password")
     
     class Config:
         json_schema_extra = {
@@ -51,6 +52,11 @@ class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=2, max_length=255)
     age: Optional[int] = Field(None, ge=0, le=150)
     gender: Optional[str] = Field(None, pattern="^(M|F|Other)$")
+
+class UserLogin(BaseModel):
+    """Schema for user login"""
+    email: EmailStr
+    password: str
 
 
 # ============================================================================
@@ -104,12 +110,50 @@ class VitalReadingResponse(VitalReadingCreate):
         from_attributes = True
 
 
+class VitalReadingUpdate(BaseModel):
+    """Schema for updating vital readings (doctor input)"""
+    heart_rate: Optional[float] = Field(None, ge=20, le=250)
+    spo2: Optional[float] = Field(None, ge=0, le=100)
+    temperature: Optional[float] = Field(None, ge=30, le=45)
+    stress_level: Optional[float] = Field(None, ge=0, le=5)
+    steps: Optional[int] = Field(None, ge=0)
+    calories: Optional[int] = Field(None, ge=0)
+    sleep_hours: Optional[float] = Field(None, ge=0, le=24)
+
+
 class VitalReadingHistory(BaseModel):
     """Schema for historical vital readings"""
     heart_rate: float
     spo2: float
     temperature: float
     timestamp: datetime
+
+
+# ============================================================================
+# SYMPTOM ANALYSIS SCHEMAS
+# ============================================================================
+
+class SymptomAnalysisRequest(BaseModel):
+    """Schema for patient symptom input"""
+    user_id: int
+    symptoms: str = Field(..., min_length=3, max_length=1000, description="Patient described symptoms")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "user_id": 1,
+                "symptoms": "I have a headache and feel feverish"
+            }
+        }
+
+
+class SymptomAnalysisResponse(BaseModel):
+    """Schema for symptom analysis response"""
+    detected_symptoms: List[str]
+    suggested_vitals: dict
+    message: str
+    severity: str = Field(..., pattern="^(mild|moderate|severe)$")
+
 
 
 # ============================================================================
@@ -228,3 +272,45 @@ class WebSocketMessage(BaseModel):
     user_id: int
     data: dict
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+# ============================================================================
+# MEDICAL RECORD SCHEMAS
+# ============================================================================
+
+class EntityExtractionResponse(BaseModel):
+    id: int
+    entity_type: str
+    entity_value: str
+    confidence_score: float
+    
+    class Config:
+        from_attributes = True
+
+class MedicalRecordBase(BaseModel):
+    record_type: str = Field(..., pattern="^(note|lab_report|imaging|discharge_summary)$")
+    content: str = Field(..., min_length=1)
+
+class MedicalRecordCreate(MedicalRecordBase):
+    user_id: int
+
+class MedicalRecordResponse(MedicalRecordBase):
+    id: int
+    user_id: int
+    doctor_id: Optional[int]
+    created_at: datetime
+    entities: List[EntityExtractionResponse] = []
+    
+    class Config:
+        from_attributes = True
+
+# ============================================================================
+# DIGITAL TWIN AGGREGATE SCHEMA
+# ============================================================================
+
+class DigitalTwinResponse(BaseModel):
+    user: UserResponse
+    latest_vitals: Optional[VitalReadingResponse]
+    metrics: dict
+    medical_records: List[MedicalRecordResponse]
+    risks: dict
