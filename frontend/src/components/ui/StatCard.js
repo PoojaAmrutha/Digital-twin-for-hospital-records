@@ -12,7 +12,7 @@ const StatCard = ({ title, value, icon: Icon, color, trend, trendUp, subtitle })
     const style = colorMap[color] || colorMap.cyan;
 
     return (
-        <Card className="hover:shadow-lg transition-transform hover:-translate-y-1 bg-gray-900/40 border-gray-800">
+        <Card className="hover:shadow-lg transition-transform hover:-translate-y-1 border-none">
             <div className="flex justify-between items-start">
                 <div>
                     <p className="text-gray-400 text-sm font-medium">{title}</p>

@@ -20,6 +20,7 @@ class User(Base):
     gender = Column(String(10))
     user_type = Column(String(50), default="patient")  # 'patient' or 'doctor'
     password_hash = Column(String(255), nullable=True) # Check note below regarding migration
+    ethereum_address = Column(String(42), nullable=True, unique=True)  # Polygon/Ethereum address
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -213,3 +214,38 @@ class AuditLog(Base):
 
     def __repr__(self):
         return f"<AuditLog(action='{self.action}', table='{self.target_table}', user_id={self.user_id})>"
+
+
+class DeteriorationPrediction(Base):
+    """
+    Deterioration Prediction model - stores ML predictions for audit and validation
+    """
+    __tablename__ = "deterioration_predictions"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
+    # Prediction details
+    prediction_time = Column(DateTime, default=datetime.utcnow, index=True)
+    prediction_horizon_hours = Column(Integer, default=48)
+    
+    # Risk scores
+    risk_score = Column(Float, nullable=False)  # 0-1 probability
+    confidence_lower = Column(Float, nullable=False)  # 95% CI lower bound
+    confidence_upper = Column(Float, nullable=False)  # 95% CI upper bound
+    risk_level = Column(String(20), nullable=False)  # Low/Medium/High/Critical
+    
+    # Explainability (stored as JSON)
+    top_features = Column(Text, nullable=True)  # JSON string of feature importance
+    attention_weights = Column(Text, nullable=True)  # JSON string of temporal attention
+    
+    # Outcome tracking (for model validation)
+    actual_deterioration = Column(Boolean, nullable=True)  # Did patient actually deteriorate?
+    outcome_recorded_at = Column(DateTime, nullable=True)
+    outcome_notes = Column(Text, nullable=True)
+    
+    # Relationship
+    user = relationship("User", backref="deterioration_predictions")
+    
+    def __repr__(self):
+        return f"<DeteriorationPrediction(user_id={self.user_id}, risk={self.risk_score:.2f}, level='{self.risk_level}')>"

@@ -8,23 +8,23 @@ import { Heart, Droplet, Activity, TrendingUp } from 'lucide-react';
 
 const VitalsCard = ({ title, value, unit, icon: Icon, color, trend }) => {
   const colorClasses = {
-    red: 'from-red-50 to-red-100 text-red-700',
-    blue: 'from-blue-50 to-blue-100 text-blue-700',
-    orange: 'from-orange-50 to-orange-100 text-orange-700',
-    purple: 'from-purple-50 to-purple-100 text-purple-700',
-    green: 'from-green-50 to-green-100 text-green-700',
+    red: 'from-red-500/20 to-red-600/10 text-red-100 border border-red-500/20',
+    blue: 'from-blue-500/20 to-blue-600/10 text-blue-100 border border-blue-500/20',
+    orange: 'from-orange-500/20 to-orange-600/10 text-orange-100 border border-orange-500/20',
+    purple: 'from-purple-500/20 to-purple-600/10 text-purple-100 border border-purple-500/20',
+    green: 'from-emerald-500/20 to-emerald-600/10 text-emerald-100 border border-emerald-500/20',
   };
 
   return (
-    <div className={`bg-gradient-to-br ${colorClasses[color]} p-4 rounded-lg shadow hover:shadow-lg transition-shadow`}>
+    <div className={`glass-card bg-gradient-to-br ${colorClasses[color]} p-4 rounded-xl shadow hover:shadow-lg transition-all`}>
       <div className="flex items-center justify-between">
         <Icon size={32} />
         <span className="text-2xl font-bold">
           {typeof value === 'number' ? value.toFixed(1) : value}
         </span>
       </div>
-      <p className="text-sm text-gray-600 mt-2">{title}</p>
-      {unit && <p className="text-xs text-gray-500">{unit}</p>}
+      <p className="text-sm text-gray-300 mt-2">{title}</p>
+      {unit && <p className="text-xs text-gray-400">{unit}</p>}
       {trend && (
         <div className="flex items-center mt-1 text-xs">
           <TrendingUp size={12} className="mr-1" />
@@ -84,7 +84,7 @@ const AlertPanel = ({ alerts, onDismiss }) => {
           </span>
         )}
       </div>
-      
+
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {alerts.length === 0 ? (
           <div className="text-center py-8 text-gray-500">

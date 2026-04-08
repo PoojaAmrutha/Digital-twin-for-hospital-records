@@ -32,9 +32,9 @@ export const HeartRateChart = ({ data }) => (
         <Line
           type="monotone"
           dataKey="hr"
-          stroke="#ef4444"
-          strokeWidth={2}
-          dot={false}
+          stroke="#ff0000"
+          strokeWidth={4}
+          dot={{ r: 4 }}
           name="Heart Rate (bpm)"
         />
       </LineChart>
@@ -43,23 +43,22 @@ export const HeartRateChart = ({ data }) => (
 );
 
 export const SpO2Chart = ({ data }) => (
-  <div className="bg-white p-6 rounded-lg shadow">
-    <h3 className="text-lg font-semibold mb-4">Blood Oxygen Levels</h3>
-    <ResponsiveContainer width="100%" height={250}>
-      <AreaChart data={data}>
+  <div className="chart-container">
+    <h3>SpO2 Levels</h3>
+    <ResponsiveContainer width="100%" height={200}>
+      <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="time" tick={{ fontSize: 10 }} />
-        <YAxis domain={[85, 100]} />
+        <XAxis dataKey="time" />
+        <YAxis domain={[90, 100]} />
         <Tooltip />
-        <Legend />
-        <Area
+        <Line
           type="monotone"
           dataKey="spo2"
-          stroke="#3b82f6"
-          fill="#93c5fd"
-          name="SpO2 (%)"
+          stroke="#00cc00" // Changed color for better visibility
+          strokeWidth={4} // Increased stroke width
+          dot={{ r: 5 }} // Increased dot size
         />
-      </AreaChart>
+      </LineChart>
     </ResponsiveContainer>
   </div>
 );
@@ -77,9 +76,9 @@ export const TemperatureChart = ({ data }) => (
         <Line
           type="monotone"
           dataKey="temp"
-          stroke="#f97316"
-          strokeWidth={2}
-          dot={false}
+          stroke="#ff6600"
+          strokeWidth={4}
+          dot={{ r: 4 }}
           name="Temperature (°C)"
         />
       </LineChart>

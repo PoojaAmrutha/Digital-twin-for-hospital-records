@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, LayoutDashboard, User, Folder, UserPlus } from 'lucide-react';
+import { LogOut, LayoutDashboard, User, Folder, UserPlus, Shield, TrendingUp } from 'lucide-react';
 import LoginView from './components/LoginView';
 import PatientDashboard from './components/PatientDashboard';
 import MedicalRecords from './components/MedicalRecords';
 import DoctorDashboard from './components/DoctorDashboard';
 import ProfileView from './components/ProfileView';
 import AddPatientForm from './components/AddPatientForm';
+import BlockchainView from './components/BlockchainView';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
 import Button from './components/ui/Button';
 
 const API_URL = 'http://localhost:8000';
@@ -14,7 +16,7 @@ const App = () => {
   // --- State Management ---
   const [user, setUser] = useState(null);
   const [allUsers, setAllUsers] = useState([]);
-  const [view, setView] = useState('login'); // login, dashboard, documents
+  const [view, setView] = useState('login'); // login, dashboard, documents, blockchain, analytics
   const [showProfile, setShowProfile] = useState(false);
   const [showAddPatient, setShowAddPatient] = useState(false);
 
@@ -29,8 +31,25 @@ const App = () => {
 
   // --- Effects ---
 
-  // 1. Initial Load
+  // 1. Initial Load & Session Restore
   useEffect(() => {
+    // Restore session from localStorage
+    const storedUser = localStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        if (parsedUser.user_type === 'researcher') {
+          setView('blockchain');
+        } else {
+          setView('dashboard');
+        }
+      } catch (e) {
+        console.error("Failed to parse stored user", e);
+        localStorage.removeItem('currentUser');
+      }
+    }
+
     fetchAllUsers();
   }, []);
 
@@ -87,10 +106,11 @@ const App = () => {
     } catch {
       // Fallback for demo/offline
       setAllUsers([
-        { id: 1, name: 'John Doe', email: 'john@example.com', age: 45, gender: 'M', user_type: 'patient' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', age: 32, gender: 'F', user_type: 'patient' },
-        { id: 99, name: 'Sarah Jones (Demo)', email: 'sarah.demo@example.com', age: 34, gender: 'F', user_type: 'patient' },
-        { id: 3, name: 'Dr. Sarah', email: 'sarah@hospital.com', age: 35, gender: 'F', user_type: 'doctor' }
+        { id: 1, name: 'Karthik Subramaniam', email: 'karthik@example.com', age: 45, gender: 'M', user_type: 'patient' },
+        { id: 2, name: 'Priya Rajan', email: 'priya@example.com', age: 32, gender: 'F', user_type: 'patient' },
+        { id: 99, name: 'Ananya Swami', email: 'ananya.demo@example.com', age: 34, gender: 'F', user_type: 'patient' },
+        { id: 3, name: 'Dr. Lakshmi Priya', email: 'lakshmi@hospital.com', age: 35, gender: 'F', user_type: 'doctor' },
+        { id: 0, name: 'Dr. Venkat Rao', email: 'venkat@research.com', age: 40, gender: 'M', user_type: 'researcher' }
       ]);
     }
   };
@@ -175,16 +195,30 @@ const App = () => {
   // --- Event Handlers ---
 
   const handleLogin = (userData) => {
+    // 1. Save to state
     setUser(userData);
-    setView('dashboard');
+
+    // 2. Persist to localStorage
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+
+    // 3. Set view
+    if (userData.user_type === 'researcher') {
+      setView('blockchain');
+    } else {
+      setView('dashboard');
+    }
   };
 
   const handleLogout = () => {
+    // 1. Clear state
     setUser(null);
     setView('login');
     setVitals({ heartRate: 0, spo2: 0, temperature: 0, stress: 0, steps: 0, calories: 0, sleepHours: 0 });
     setAlerts([]);
     setHistoricalData([]);
+
+    // 2. Clear localStorage
+    localStorage.removeItem('currentUser');
   };
 
   // --- Render ---
@@ -196,7 +230,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-app pb-20">
       {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800 px-6 py-4">
+      <nav className="sticky top-0 z-50 glass-card mx-4 mt-4 border-none px-6 py-4 mb-8">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-8">
             <div className="flex items-center gap-2">
@@ -208,22 +242,44 @@ const App = () => {
               </h1>
             </div>
 
-            {user.user_type === 'patient' && (
-              <div className="hidden md:flex items-center gap-1 bg-gray-800/50 p-1 rounded-lg border border-gray-700">
-                <button
-                  onClick={() => setView('dashboard')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setView('documents')}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'documents' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
-                >
-                  Medical Records
-                </button>
-              </div>
-            )}
+            <div className="hidden md:flex items-center gap-1 bg-gray-800/50 p-1 rounded-lg border border-gray-700">
+              {user.user_type === 'patient' && (
+                <>
+                  <button
+                    onClick={() => setView('dashboard')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    Dashboard
+                  </button>
+                  <button
+                    onClick={() => setView('documents')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${view === 'documents' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    Medical Records
+                  </button>
+                </>
+
+              )}
+
+              {user.user_type === 'researcher' && (
+                <>
+                  <button
+                    onClick={() => setView('blockchain')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${view === 'blockchain' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    <Shield size={16} />
+                    Blockchain Data
+                  </button>
+                  <button
+                    onClick={() => setView('analytics')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${view === 'analytics' ? 'bg-indigo-600 text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
+                  >
+                    <TrendingUp size={16} />
+                    Analytics
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -259,123 +315,132 @@ const App = () => {
             />
           </div>
         </div>
-      </nav>
+      </nav >
 
       {/* Main Content */}
-      <main className="dashboard-container mt-8">
-        {user.user_type === 'patient' ? (
-          <>
-            {view === 'dashboard' && <PatientDashboard
-              user={user}
-              vitals={vitals}
-              healthScore={healthScore}
-              alerts={alerts}
-              historicalData={historicalData}
-              onVitalsUpdate={() => {
-                // Refresh vitals after chatbot updates
-                fetchVitals();
-                fetchHealthScore();
-              }}
-            />}
-            {view === 'documents' && <MedicalRecords />}
-          </>
-        ) : (
-          <DoctorDashboard allUsers={allUsers} onSelectPatient={() => { }} />
-        )}
-      </main>
+      < main className="dashboard-container mt-8" >
+        {view === 'blockchain' && <BlockchainView />}
+        {view === 'analytics' && <AnalyticsDashboard />}
+
+        {
+          user.user_type === 'patient' ? (
+            <>
+              {view === 'dashboard' && <PatientDashboard
+                user={user}
+                vitals={vitals}
+                healthScore={healthScore}
+                alerts={alerts}
+                historicalData={historicalData}
+                onVitalsUpdate={() => {
+                  // Refresh vitals after chatbot updates
+                  fetchVitals();
+                  fetchHealthScore();
+                }}
+              />}
+              {view === 'documents' && <MedicalRecords />}
+            </>
+          ) : (
+            <DoctorDashboard allUsers={allUsers} onSelectPatient={() => { }} />
+          )
+        }
+      </main >
 
       {/* Profile Modal */}
-      {showProfile && (
-        <ProfileView
-          user={user}
-          onUpdateProfile={async (updatedData) => {
-            try {
-              const response = await fetch(`${API_URL}/users/${user.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  name: updatedData.name,
-                  age: updatedData.age,
-                  gender: updatedData.gender
-                })
-              });
+      {
+        showProfile && (
+          <ProfileView
+            user={user}
+            onUpdateProfile={async (updatedData) => {
+              try {
+                const response = await fetch(`${API_URL}/users/${user.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: updatedData.name,
+                    age: updatedData.age,
+                    gender: updatedData.gender
+                  })
+                });
 
-              if (!response.ok) {
-                throw new Error('Failed to update profile');
+                if (!response.ok) {
+                  throw new Error('Failed to update profile');
+                }
+
+                const updated = await response.json();
+                setUser({ ...user, ...updated });
+                setShowProfile(false);
+                alert('Profile updated successfully!');
+              } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Failed to update profile. Please try again.');
               }
-
-              const updated = await response.json();
-              setUser({ ...user, ...updated });
-              setShowProfile(false);
-              alert('Profile updated successfully!');
-            } catch (error) {
-              console.error('Error updating profile:', error);
-              alert('Failed to update profile. Please try again.');
-            }
-          }}
-          onClose={() => setShowProfile(false)}
-        />
-      )}
+            }}
+            onClose={() => setShowProfile(false)}
+          />
+        )
+      }
 
       {/* Add Patient Modal */}
-      {showAddPatient && (
-        <AddPatientForm
-          onAddPatient={async (newPatient) => {
-            try {
-              // 1. Create user in database
-              const userResponse = await fetch(`${API_URL}/users/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  name: newPatient.name,
-                  email: newPatient.email,
-                  age: newPatient.age,
-                  gender: newPatient.gender,
-                  user_type: 'patient'
-                })
-              });
+      {
+        showAddPatient && (
+          <AddPatientForm
+            onAddPatient={async (newPatient) => {
+              try {
+                // 1. Create user in database
+                const userResponse = await fetch(`${API_URL}/users/`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: newPatient.name,
+                    email: newPatient.email,
+                    age: newPatient.age,
+                    gender: newPatient.gender,
+                    user_type: 'patient'
+                  })
+                });
 
-              if (!userResponse.ok) {
-                const error = await userResponse.json();
-                throw new Error(error.detail || 'Failed to create patient');
+                if (!userResponse.ok) {
+                  const error = await userResponse.json();
+                  throw new Error(error.detail || 'Failed to create patient');
+                }
+
+                const createdUser = await userResponse.json();
+
+                // 2. Save initial vitals for the new patient
+                const vitalsResponse = await fetch(`${API_URL}/vitals/`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    user_id: createdUser.id,
+                    heart_rate: newPatient.vitals.heartRate,
+                    spo2: newPatient.vitals.spo2,
+                    temperature: newPatient.vitals.temperature,
+                    stress_level: newPatient.vitals.stress,
+                    steps: 0,
+                    calories: 0,
+                    sleep_hours: 7.5
+                  })
+                });
+
+                if (!vitalsResponse.ok) {
+                  console.error('Failed to save vitals, but user created');
+                }
+
+                // 3. Refresh user list to show new patient
+                await fetchAllUsers();
+
+                setShowAddPatient(false);
+                alert(`Patient ${createdUser.name} added successfully!`);
+              } catch (error) {
+                console.error('Error adding patient:', error);
+                alert(`Error: ${error.message}`);
               }
-
-              const createdUser = await userResponse.json();
-
-              // 2. Save initial vitals for the new patient
-              const vitalsResponse = await fetch(`${API_URL}/vitals/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  user_id: createdUser.id,
-                  heart_rate: newPatient.vitals.heartRate,
-                  spo2: newPatient.vitals.spo2,
-                  temperature: newPatient.vitals.temperature,
-                  stress_level: newPatient.vitals.stress,
-                  steps: 0,
-                  calories: 0,
-                  sleep_hours: 7.5
-                })
-              });
-
-              if (!vitalsResponse.ok) {
-                console.error('Failed to save vitals, but user created');
-              }
-
-              // 3. Refresh user list to show new patient
-              await fetchAllUsers();
-
-              setShowAddPatient(false);
-              alert(`Patient ${createdUser.name} added successfully!`);
-            } catch (error) {
-              console.error('Error adding patient:', error);
-              alert(`Error: ${error.message}`);
-            }
-          }}
-          onClose={() => setShowAddPatient(false)}
-        />
-      )}
-    </div>
+            }}
+            onClose={() => setShowAddPatient(false)}
+          />
+        )
+      }
+    </div >
   );
 };
 

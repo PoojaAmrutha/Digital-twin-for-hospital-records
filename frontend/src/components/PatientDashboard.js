@@ -1,15 +1,47 @@
 import React from 'react';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Heart, Activity, Thermometer, User, Clock, Flame, Footprints, Moon, AlertOctagon } from 'lucide-react';
 import Card from './ui/Card';
 import StatCard from './ui/StatCard';
 import SymptomChatbot from './SymptomChatbot';
+import PrescriptionScanner from './PrescriptionScanner';
 
 const PatientDashboard = ({ user, vitals, healthScore, alerts, historicalData, onVitalsUpdate }) => {
+  const [riskHistory, setRiskHistory] = React.useState([]);
+  const [modelStatus, setModelStatus] = React.useState(null);
+
+  React.useEffect(() => {
+    // Fetch Deterioration Risk History
+    const fetchRiskHistory = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/api/ml/deterioration-history/${user.id}?limit=7`);
+        if (res.ok) {
+          const data = await res.json();
+          const formatted = data.predictions.map(p => ({
+            date: new Date(p.prediction_time).toLocaleDateString(undefined, { weekday: 'short' }),
+            risk: p.risk_score * 100 // Convert to percentage
+          })).reverse();
+          setRiskHistory(formatted);
+
+          if (data.predictions.length > 0) {
+            setModelStatus(data.predictions[0].model_trained);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch risk history", e);
+      }
+    };
+
+    fetchRiskHistory();
+  }, [user.id]);
+
   return (
     <div className="space-y-6 animate-fade-in pb-10">
-      {/* Symptom Chatbot */}
-      <SymptomChatbot user={user} onVitalsUpdate={onVitalsUpdate} />
+      {/* Symptom Chatbot & Prescription Scanner */}
+      <div className="flex gap-4">
+        <SymptomChatbot user={user} onVitalsUpdate={onVitalsUpdate} />
+        <PrescriptionScanner userId={user.id} />
+      </div>
 
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -52,64 +84,76 @@ const PatientDashboard = ({ user, vitals, healthScore, alerts, historicalData, o
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart Section */}
         <div className="lg:col-span-2 space-y-6">
-          <Card className="h-[400px]">
+          {/* Heart Rate Chart */}
+          <Card className="glass-card h-[400px]">
+            {/* ... existing chart code ... */}
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h3 className="text-xl font-bold text-white">Heart Rate History</h3>
                 <p className="text-sm text-gray-400">Real-time continuous monitoring (Last 20 readings)</p>
               </div>
-              <div className="flex gap-2">
-                {['1H', '24H', '1W'].map(p => (
-                  <button key={p} className="px-3 py-1 text-xs font-medium rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
-                    {p}
-                  </button>
-                ))}
+              {/* ... buttons ... */}
+            </div>
+            {/* ... responsive container ... */}
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={historicalData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis dataKey="time" stroke="#666" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="#666" style={{ fontSize: '12px' }} />
+                  <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #ddd', borderRadius: '8px' }} />
+                  <Line type="monotone" dataKey="heartRate" stroke="#ff0000" strokeWidth={4} dot={{ r: 5 }} name="Heart Rate" />
+                  <Line type="monotone" dataKey="spo2" stroke="#0066ff" strokeWidth={4} dot={{ r: 5 }} name="SpO2" />
+                  <Line type="monotone" dataKey="temperature" stroke="#ff9900" strokeWidth={4} dot={{ r: 5 }} name="Temperature" />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          {/* New Deterioration Risk Trend Chart */}
+          <Card className="glass-card h-[350px]">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Activity className="text-purple-400" />
+                  AI Deterioration Risk Trend
+                  {modelStatus !== null && (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${modelStatus
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                      : 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400'
+                      }`}>
+                      {modelStatus ? 'Model: Trained (v1.0)' : 'Model: Untrained'}
+                    </span>
+                  )}
+                </h3>
+                <p className="text-sm text-gray-400">7-Day Multi-Modal Temporal Fusion Analysis</p>
               </div>
             </div>
 
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={historicalData}>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height={250}>
+                <AreaChart data={riskHistory}>
                   <defs>
-                    <linearGradient id="colorHr" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                    <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <XAxis
-                    dataKey="time"
-                    stroke="#475569"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <YAxis
-                    stroke="#475569"
-                    fontSize={12}
-                    domain={['dataMin - 10', 'dataMax + 10']}
-                    tickLine={false}
-                    axisLine={false}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis dataKey="date" stroke="#9ca3af" style={{ fontSize: '12px' }} />
+                  <YAxis stroke="#9ca3af" style={{ fontSize: '12px' }} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: 'rgba(15, 23, 42, 0.9)', borderRadius: '12px', border: '1px solid #334155', color: '#fff' }}
-                    itemStyle={{ color: '#fff' }}
+                    contentStyle={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '8px', color: '#fff' }}
+                    labelStyle={{ color: '#9ca3af' }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="hr"
-                    stroke="#f43f5e"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#colorHr)"
-                    animationDuration={1000}
-                  />
+                  <Area type="monotone" dataKey="risk" stroke="#8884d8" fillOpacity={1} fill="url(#colorRisk)" name="Risk Score (%)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="flex items-center gap-4 bg-gray-900/60 transition-transform hover:-translate-y-1">
+            <Card className="glass-card flex items-center gap-4 transition-transform hover:-translate-y-1">
               <div className="p-3 bg-purple-500/20 rounded-full text-purple-400">
                 <Footprints size={24} />
               </div>
@@ -118,7 +162,7 @@ const PatientDashboard = ({ user, vitals, healthScore, alerts, historicalData, o
                 <p className="text-2xl font-bold text-white">{vitals.steps}</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-4 bg-gray-900/60 transition-transform hover:-translate-y-1">
+            <Card className="glass-card flex items-center gap-4 transition-transform hover:-translate-y-1">
               <div className="p-3 bg-orange-500/20 rounded-full text-orange-400">
                 <Flame size={24} />
               </div>
@@ -127,7 +171,7 @@ const PatientDashboard = ({ user, vitals, healthScore, alerts, historicalData, o
                 <p className="text-2xl font-bold text-white">{vitals.calories}</p>
               </div>
             </Card>
-            <Card className="flex items-center gap-4 bg-gray-900/60 transition-transform hover:-translate-y-1">
+            <Card className="glass-card flex items-center gap-4 transition-transform hover:-translate-y-1">
               <div className="p-3 bg-indigo-500/20 rounded-full text-indigo-400">
                 <Moon size={24} />
               </div>
@@ -142,7 +186,7 @@ const PatientDashboard = ({ user, vitals, healthScore, alerts, historicalData, o
         {/* Right Sidebar: Health Score & Alerts */}
         <div className="space-y-6">
           {/* Health Score Circle */}
-          <Card className="text-center relative overflow-hidden bg-gradient-to-b from-gray-800/80 to-gray-900/80 border-gray-700">
+          <Card className="glass-card text-center relative overflow-hidden bg-gradient-to-b from-gray-800/80 to-gray-900/80 border-gray-700">
             <h3 className="text-lg font-bold text-gray-200 mb-6">Overall Health Score</h3>
             <div className="relative w-48 h-48 mx-auto mb-4 flex items-center justify-center">
               {/* SVG Progress Circle would go here, simpler div for now */}

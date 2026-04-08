@@ -398,65 +398,136 @@ if os.path.exists(MODEL_PATH):
     anomaly_detector.load(MODEL_PATH)
 
 
+
 class ReadmissionRiskModel:
     """
-    Predicts risk of hospital readmission within 30 days
+    Predicts risk of hospital reading within 30 days using trained RandomForest
     """
     def __init__(self):
+        self.model = None
+        self.scaler = None
+        self.features = []
         self.is_trained = False
+        self.load_model()
         
+    def load_model(self):
+        try:
+            path = "models/readmission_model.pkl"
+            if os.path.exists(path):
+                data = joblib.load(path)
+                self.model = data['model']
+                self.scaler = data['scaler']
+                self.features = data['features']
+                self.is_trained = True
+                print(f"✅ Readmission model loaded from {path}")
+            else:
+                print(f"⚠️ Readmission model not found at {path}")
+        except Exception as e:
+            print(f"❌ Error loading readmission model: {e}")
+
     def predict(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Predict readmission risk
-        Args:
-            patient_data: Dict containing age, recent_admissions, chronic_conditions
         """
-        # Mock prediction logic based on rules
-        base_risk = 0.1
-        reasoning = []
-        
-        age = patient_data.get('age', 0)
-        if age > 80:
-            base_risk += 0.3
-            reasoning.append("Advanced age (>80)")
-        elif age > 65:
-            base_risk += 0.15
-            reasoning.append("Senior age (>65)")
+        if not self.is_trained:
+            return {"error": "Model not trained", "readmission_probability": 0, "risk_level": "Unknown"}
             
-        recent_admissions = patient_data.get('recent_admissions', 0)
-        if recent_admissions > 2:
-            base_risk += 0.4
-            reasoning.append("High frequency of recent admissions")
-        elif recent_admissions > 0:
-            base_risk += 0.2
-            reasoning.append("Prior admission history")
+        try:
+            # Prepare features (defaults if missing)
+            # features = ['age', 'systolic_bp', 'diastolic_bp', 'heart_rate', 'spo2', 
+            #             'has_diabetes', 'has_hypertension', 'recent_admissions']
             
-        comorbidities = patient_data.get('comorbidities', [])
-        if len(comorbidities) >= 3:
-            base_risk += 0.2
-            reasoning.append("Multiple comorbidities")
+            # Map input data to features
+            input_vector = []
+            for feature in self.features:
+                val = patient_data.get(feature, 0)
+                # Handle booleans
+                if isinstance(val, bool):
+                    val = 1 if val else 0
+                input_vector.append(val)
             
-        risk_score = min(0.95, base_risk)
-        
-        return {
-            "readmission_probability": round(risk_score, 2),
-            "risk_level": "High" if risk_score > 0.5 else "Low",
-            "reasoning": reasoning
-        }
+            # Reshape and scale
+            X = np.array([input_vector])
+            X_scaled = self.scaler.transform(X)
+            
+            # Predict probability
+            prob = self.model.predict_proba(X_scaled)[0][1]
+            
+            # Determine risk level
+            risk_level = "High" if prob > 0.6 else "Medium" if prob > 0.3 else "Low"
+            
+            return {
+                "readmission_probability": round(prob, 2),
+                "risk_level": risk_level,
+                "reasoning": self._get_reasoning(patient_data, prob)
+            }
+            
+        except Exception as e:
+            print(f"Prediction error: {e}")
+            return {"error": str(e), "readmission_probability": 0}
+
+    def _get_reasoning(self, data, prob):
+        reasons = []
+        if prob > 0.5:
+            if data.get('age', 0) > 70: reasons.append("Advanced Age")
+            if data.get('recent_admissions', 0) > 0: reasons.append("History of admissions")
+            if data.get('has_diabetes'): reasons.append("Chronic condition (Diabetes)")
+        return reasons
 
 class TreatmentResponseModel:
     """
-    Predicts probability of treatment success based on patient profile
+    Predicts probability of treatment success using trained GradientBoosting
     """
-    def predict_success(self, treatment: str, patient_conditions: List[str]) -> float:
-        # Mock logic
-        # Real implementation would use historical data
-        base_success = 0.7
+    def __init__(self):
+        self.model = None
+        self.label_encoder = None
+        self.features = []
+        self.is_trained = False
+        self.load_model()
         
-        if "Diabetes" in patient_conditions and treatment == "Steroids":
-            base_success -= 0.3 # Contraindicated
+    def load_model(self):
+        try:
+            path = "models/treatment_model.pkl"
+            if os.path.exists(path):
+                data = joblib.load(path)
+                self.model = data['model']
+                self.label_encoder = data['label_encoder']
+                self.features = data['features']
+                self.is_trained = True
+                print(f"✅ Treatment model loaded from {path}")
+            else:
+                print(f"⚠️ Treatment model not found at {path}")
+        except Exception as e:
+            print(f"❌ Error loading treatment model: {e}")
+
+    def predict_success(self, treatment: str, patient_conditions: Dict[str, Any]) -> float:
+        if not self.is_trained:
+            return 0.5
             
-        return round(base_success, 2)
+        try:
+            # Encoder treatment type
+            try:
+                treatment_encoded = self.label_encoder.transform([treatment])[0]
+            except:
+                # Unknown treatment
+                treatment_encoded = 0
+                
+            # Prepare other features: ['age', 'bmi', 'treatment_type_encoded', 'has_diabetes', 'has_hypertension']
+            input_vector = [
+                patient_conditions.get('age', 50),
+                patient_conditions.get('bmi', 25),
+                treatment_encoded,
+                1 if patient_conditions.get('has_diabetes') else 0,
+                1 if patient_conditions.get('has_hypertension') else 0
+            ]
+             
+            # Predict
+            prob = self.model.predict_proba([input_vector])[0][1]
+            return round(prob, 2)
+            
+        except Exception as e:
+            print(f"Treatment prediction error: {e}")
+            return 0.5
 
 # Initialize new models
 readmission_model = ReadmissionRiskModel()

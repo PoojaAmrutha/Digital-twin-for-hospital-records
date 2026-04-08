@@ -14,3 +14,15 @@ websockets
 pytest
 pytest-cov
 requests
+passlib[bcrypt]
+bcrypt
+google-generativeai
+kagglehub
+email-validator
+torch
+sentence-transformers
+scipy
+
+# Blockchain dependencies
+web3==6.15.0
+eth-account==0.10.0

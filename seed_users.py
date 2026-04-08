@@ -1,55 +1,27 @@
 import requests
-import sys
+import json
 
-API_URL = "http://127.0.0.1:8000"
+API_URL = "http://localhost:8000"
 
-def seed_users():
-    print("🌱 Seeding database with default users...")
-    
-    # 1. Create Doctor
-    doctor = {
-        "name": "Dr. House",
-        "email": "doctor@healthwatch.ai",
-        "age": 50,
-        "gender": "M",
-        "user_type": "doctor",
-        "password": "password123"
-    }
-    
+users = [
+    {"name": "Dr. Venkat Rao", "email": "venkat@research.com", "age": 40, "gender": "M", "user_type": "researcher", "password": "admin123"},
+    {"name": "Dr. Lakshmi Priya", "email": "lakshmi@hospital.com", "age": 35, "gender": "F", "user_type": "doctor", "password": "doctor123"},
+    {"name": "Ananya Swami", "email": "ananya.demo@example.com", "age": 34, "gender": "F", "user_type": "patient", "password": "patient123"},
+    {"name": "Legacy Patient", "email": "patient@healthwatch.ai", "age": 45, "gender": "M", "user_type": "patient", "password": "password123"}
+]
+
+print(f"Seeding {len(users)} users to {API_URL}...")
+
+for user in users:
     try:
-        res = requests.post(f"{API_URL}/users/", json=doctor)
-        if res.status_code == 200:
-            print(f"✅ Created Doctor: {doctor['email']} / password123")
-        elif res.status_code == 400:
-            print(f"ℹ️ Doctor already exists: {doctor['email']}")
+        response = requests.post(f"{API_URL}/users/", json=user)
+        if response.status_code == 200:
+            print(f"✅ Created: {user['name']} ({user['email']})")
+        elif response.status_code == 400 and "Email already registered" in response.text:
+            print(f"ℹ️  Exists:  {user['name']} ({user['email']})")
         else:
-            print(f"❌ Failed to create doctor: {res.text}")
-            
+            print(f"❌ Failed:  {user['name']} - {response.status_code} {response.text}")
     except Exception as e:
-        print(f"❌ Connection error: {e}")
-        return
+        print(f"❌ Error:   {user['name']} - {str(e)}")
 
-    # 2. Create Patient
-    patient = {
-        "name": "John Doe",
-        "email": "patient@healthwatch.ai",
-        "age": 30,
-        "gender": "M",
-        "user_type": "patient",
-        "password": "password123"
-    }
-    
-    try:
-        res = requests.post(f"{API_URL}/users/", json=patient)
-        if res.status_code == 200:
-            print(f"✅ Created Patient: {patient['email']} / password123")
-        elif res.status_code == 400:
-            print(f"ℹ️ Patient already exists: {patient['email']}")
-        else:
-            print(f"❌ Failed to create patient: {res.text}")
-
-    except Exception as e:
-        print(f"❌ Connection error: {e}")
-
-if __name__ == "__main__":
-    seed_users()
+print("\nSeeding complete.")

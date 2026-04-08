@@ -266,12 +266,12 @@ def seed_sample_data():
     
     # Create sample users
     users = [
-        User(name="John Doe", email="john@example.com", age=45, gender="M", user_type="patient"),
-        User(name="Jane Smith", email="jane@example.com", age=62, gender="F", user_type="patient"),
-        User(name="Bob Johnson", email="bob@example.com", age=38, gender="M", user_type="patient"),
-        User(name="Alice Brown", email="alice@example.com", age=71, gender="F", user_type="patient"),
-        User(name="Charlie Davis", email="charlie@example.com", age=29, gender="M", user_type="patient"),
-        User(name="Dr. Sarah Wilson", email="sarah@hospital.com", age=42, gender="F", user_type="doctor"),
+        User(name="Ramesh Naidu", email="ramesh@example.com", age=45, gender="M", user_type="patient"),
+        User(name="Saraswathi Amma", email="saraswathi@example.com", age=62, gender="F", user_type="patient"),
+        User(name="Arun Prasad", email="arun@example.com", age=38, gender="M", user_type="patient"),
+        User(name="Padmavathi Reddy", email="padmavathi@example.com", age=71, gender="F", user_type="patient"),
+        User(name="Vijay Shankar", email="vijay@example.com", age=29, gender="M", user_type="patient"),
+        User(name="Dr. Divya Srinivasan", email="divya@hospital.com", age=42, gender="F", user_type="doctor"),
     ]
     
     for user in users:

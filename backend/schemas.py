@@ -18,7 +18,7 @@ class UserCreate(BaseModel):
     email: EmailStr
     age: int = Field(..., ge=0, le=150)
     gender: str = Field(..., pattern="^(M|F|Other)$")
-    user_type: str = Field(default="patient", pattern="^(patient|doctor)$")
+    user_type: str = Field(default="patient", pattern="^(patient|doctor|researcher)$")
     password: str = Field(..., min_length=6, description="User password")
     
     class Config:

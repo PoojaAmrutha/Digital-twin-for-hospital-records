@@ -8,14 +8,14 @@ def seed_multiple_patients():
     print("🌱 Seeding database with historical patient data...")
     
     patients = [
-        {"name": "Sarah Connor", "age": 35, "gender": "F"},
-        {"name": "Bruce Wayne", "age": 42, "gender": "M"},
-        {"name": "Clark Kent", "age": 38, "gender": "M"},
-        {"name": "Diana Prince", "age": 300, "gender": "F"},
-        {"name": "Peter Parker", "age": 22, "gender": "M"},
-        {"name": "Wanda Maximoff", "age": 29, "gender": "F"},
-        {"name": "Steve Rogers", "age": 100, "gender": "M"},
-        {"name": "Natasha Romanoff", "age": 34, "gender": "F"}
+        {"name": "Lakshmi Devi", "age": 35, "gender": "F"},
+        {"name": "Rajesh Kumar", "age": 42, "gender": "M"},
+        {"name": "Venkatesh Reddy", "age": 38, "gender": "M"},
+        {"name": "Meenakshi Iyer", "age": 55, "gender": "F"},
+        {"name": "Karthik Krishnan", "age": 22, "gender": "M"},
+        {"name": "Priya Nair", "age": 29, "gender": "F"},
+        {"name": "Suresh Babu", "age": 48, "gender": "M"},
+        {"name": "Kavitha Menon", "age": 34, "gender": "F"}
     ]
 
     created_count = 0

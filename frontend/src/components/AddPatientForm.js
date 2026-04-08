@@ -185,7 +185,7 @@ const AddPatientForm = ({ onAddPatient, onClose }) => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm text-gray-400 mb-1 block">Full Name *</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className={`input-field ${errors.name ? 'border-red-500' : ''}`} placeholder="John Doe" />
+                                    <input type="text" name="name" value={formData.name} onChange={handleChange} className={`input-field ${errors.name ? 'border-red-500' : ''}`} placeholder="Lakshmi Devi" />
                                     {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
                                 </div>
 
@@ -300,8 +300,8 @@ const AddPatientForm = ({ onAddPatient, onClose }) => {
                                                     type="button"
                                                     onClick={() => setFormData({ ...formData, medicalCondition: key })}
                                                     className={`p-4 rounded-xl border-2 transition-all text-left ${formData.medicalCondition === key
-                                                            ? 'border-indigo-500 bg-indigo-500/20'
-                                                            : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
+                                                        ? 'border-indigo-500 bg-indigo-500/20'
+                                                        : 'border-gray-700 bg-gray-800/50 hover:border-gray-600'
                                                         }`}
                                                 >
                                                     <p className="font-bold text-white capitalize mb-1">{key}</p>

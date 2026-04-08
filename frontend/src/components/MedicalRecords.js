@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { FileText, Image as ImageIcon, Upload, X, Eye, File, Calendar, Maximize2 } from 'lucide-react';
+import { FileText, Image as ImageIcon, X, Eye, File, Calendar, Maximize2 } from 'lucide-react';
 import Card from './ui/Card';
 import Button from './ui/Button';
 
 const MedicalRecords = () => {
     const [activeTab, setActiveTab] = useState('all');
-    const [isUploading, setIsUploading] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState(null); // Lightbox State
 
     // Sample Data (Hardcoded for Demo)
@@ -51,29 +50,7 @@ const MedicalRecords = () => {
         }
     ]);
 
-    const [newFile, setNewFile] = useState(null);
 
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setTimeout(() => {
-                setRecords([
-                    {
-                        id: Date.now(),
-                        title: file.name,
-                        type: file.type.includes('image') ? 'image' : 'report',
-                        date: new Date().toISOString().split('T')[0],
-                        doctor: 'Self Upload',
-                        category: 'report',
-                        url: URL.createObjectURL(file)
-                    },
-                    ...records
-                ]);
-                setIsUploading(false);
-                setNewFile(null);
-            }, 1000);
-        }
-    };
 
     const filteredRecords = activeTab === 'all'
         ? records
@@ -86,99 +63,68 @@ const MedicalRecords = () => {
                     <h2 className="text-3xl font-bold text-white">Medical Records</h2>
                     <p className="text-gray-400 mt-1">Manage your reports, scans, and documents</p>
                 </div>
-                <Button onClick={() => setIsUploading(true)} icon={Upload}>
-                    Upload Document
-                </Button>
             </div>
 
+
             {/* --- Lightbox Modal --- */}
-            {selectedRecord && (
-                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedRecord(null)}>
-                    <div className="max-w-5xl w-full h-[90vh] flex flex-col md:flex-row gap-6" onClick={e => e.stopPropagation()}>
+            {
+                selectedRecord && (
+                    <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 animate-fade-in" onClick={() => setSelectedRecord(null)}>
+                        <div className="max-w-5xl w-full h-[90vh] flex flex-col md:flex-row gap-6" onClick={e => e.stopPropagation()}>
 
-                        {/* Image Area */}
-                        <div className="flex-1 bg-black rounded-2xl overflow-hidden flex items-center justify-center border border-gray-800 shadow-2xl relative">
-                            {selectedRecord.url ? (
-                                <img src={selectedRecord.url} alt={selectedRecord.title} className="max-w-full max-h-full object-contain" />
-                            ) : (
-                                <FileText size={100} className="text-gray-600" />
-                            )}
-                            <button onClick={() => setSelectedRecord(null)} className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-red-500/80 transition-colors">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        {/* Sidebar Details */}
-                        <div className="w-full md:w-80 bg-gray-900/80 backdrop-blur-md rounded-2xl p-6 border border-gray-700 flex flex-col">
-                            <div>
-                                <h3 className="text-xl font-bold text-white mb-2">{selectedRecord.title}</h3>
-                                <span className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-xs rounded-md uppercase tracking-wider font-semibold">
-                                    {selectedRecord.category}
-                                </span>
+                            {/* Image Area */}
+                            <div className="flex-1 bg-black rounded-2xl overflow-hidden flex items-center justify-center border border-gray-800 shadow-2xl relative">
+                                {selectedRecord.url ? (
+                                    <img src={selectedRecord.url} alt={selectedRecord.title} className="max-w-full max-h-full object-contain" />
+                                ) : (
+                                    <FileText size={100} className="text-gray-600" />
+                                )}
+                                <button onClick={() => setSelectedRecord(null)} className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-red-500/80 transition-colors">
+                                    <X size={24} />
+                                </button>
                             </div>
 
-                            <div className="mt-8 space-y-6">
+                            {/* Sidebar Details */}
+                            <div className="w-full md:w-80 bg-gray-900/80 backdrop-blur-md rounded-2xl p-6 border border-gray-700 flex flex-col">
                                 <div>
-                                    <p className="text-sm text-gray-500 mb-1">Doctor / Source</p>
-                                    <p className="text-gray-200 font-medium flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                        {selectedRecord.doctor}
-                                    </p>
+                                    <h3 className="text-xl font-bold text-white mb-2">{selectedRecord.title}</h3>
+                                    <span className="px-2 py-1 bg-indigo-500/20 text-indigo-400 text-xs rounded-md uppercase tracking-wider font-semibold">
+                                        {selectedRecord.category}
+                                    </span>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-gray-500 mb-1">Date Added</p>
-                                    <p className="text-gray-200 font-medium">{selectedRecord.date}</p>
-                                </div>
-                                {selectedRecord.details && (
-                                    <div className="p-4 bg-gray-800 rounded-xl border border-gray-700">
-                                        <p className="text-sm text-gray-400 mb-2">AI Analysis</p>
-                                        <p className="text-sm text-gray-300 leading-relaxed">
-                                            {selectedRecord.details}
+
+                                <div className="mt-8 space-y-6">
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">Doctor / Source</p>
+                                        <p className="text-gray-200 font-medium flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                            {selectedRecord.doctor}
                                         </p>
                                     </div>
-                                )}
-                            </div>
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-1">Date Added</p>
+                                        <p className="text-gray-200 font-medium">{selectedRecord.date}</p>
+                                    </div>
+                                    {selectedRecord.details && (
+                                        <div className="p-4 bg-gray-800 rounded-xl border border-gray-700">
+                                            <p className="text-sm text-gray-400 mb-2">AI Analysis</p>
+                                            <p className="text-sm text-gray-300 leading-relaxed">
+                                                {selectedRecord.details}
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
 
-                            <div className="mt-auto pt-6">
-                                <Button variant="primary" className="w-full justify-center">Download</Button>
+                                <div className="mt-auto pt-6">
+                                    <Button variant="primary" className="w-full justify-center">Download</Button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
-            {/* Upload Modal (Overlay) */}
-            {isUploading && (
-                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <Card className="max-w-md w-full bg-gray-900 border-gray-700 animate-slide-in">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-white">Upload Record</h3>
-                            <button onClick={() => setIsUploading(false)} className="text-gray-400 hover:text-white">
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <div className="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center bg-gray-800/50 hover:bg-gray-800 transition-colors">
-                            <input
-                                type="file"
-                                id="file-upload"
-                                className="hidden"
-                                onChange={handleFileUpload}
-                            />
-                            <label htmlFor="file-upload" className="cursor-pointer block">
-                                <div className="w-16 h-16 bg-gray-700 text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Upload size={32} />
-                                </div>
-                                <p className="text-gray-200 font-semibold text-lg">Click to Upload</p>
-                                <p className="text-gray-500 text-sm mt-1">PDF, JPG, PNG up to 10MB</p>
-                            </label>
-                        </div>
-                        <div className="mt-6 flex justify-end">
-                            <Button variant="secondary" onClick={() => setIsUploading(false)}>Cancel</Button>
-                        </div>
-                    </Card>
-                </div>
-            )}
+            {/* Upload Modal (Overlay) - Removed in favor of PrescriptionUpload */}
 
             {/* Filters */}
             <div className="flex gap-2 overflow-x-auto pb-2">
@@ -187,8 +133,8 @@ const MedicalRecords = () => {
                         key={tab}
                         onClick={() => setActiveTab(tab)}
                         className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-all ${activeTab === tab
-                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 transform scale-105'
-                                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700'
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/40 transform scale-105'
+                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700 border border-gray-700'
                             }`}
                     >
                         {tab === 'all' ? 'All Documents' : tab + 's'}
@@ -244,7 +190,7 @@ const MedicalRecords = () => {
                     </Card>
                 ))}
             </div>
-        </div>
+        </div >
     );
 };
 

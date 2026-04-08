@@ -176,7 +176,7 @@ const DoctorDashboard = ({ allUsers, onSelectPatient }) => {
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-gradient-to-br from-indigo-600/90 to-violet-700/90 border-none relative overflow-hidden group">
+                <Card className="glass-card bg-gradient-to-br from-indigo-600/90 to-violet-700/90 border-none relative overflow-hidden group">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl transform translate-x-10 -translate-y-10 group-hover:bg-white/20 transition-colors"></div>
                     <div className="flex justify-between items-start relative z-10">
                         <div>
@@ -193,7 +193,7 @@ const DoctorDashboard = ({ allUsers, onSelectPatient }) => {
                     </p>
                 </Card>
 
-                <Card className="bg-gray-900/60 border-gray-800">
+                <Card className="glass-card border-none">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-gray-400 font-medium">Critical Alerts</p>
@@ -206,7 +206,7 @@ const DoctorDashboard = ({ allUsers, onSelectPatient }) => {
                     <p className="text-sm text-gray-500 mt-4">Requires immediate attention</p>
                 </Card>
 
-                <Card className="bg-gray-900/60 border-gray-800">
+                <Card className="glass-card border-none">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-gray-400 font-medium">Avg Health Score</p>
@@ -742,7 +742,7 @@ const DoctorDashboard = ({ allUsers, onSelectPatient }) => {
                     {patients.map(patient => {
                         const { status, color, icon: StatusIcon } = getPatientStatus(patient.id);
                         return (
-                            <Card key={patient.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 hover:bg-gray-800/50 hover:border-indigo-500/30 transition-all group bg-gray-900/40">
+                            <Card key={patient.id} className="glass-card flex flex-col md:flex-row items-start md:items-center justify-between p-5 hover:bg-white/5 hover:border-indigo-500/30 transition-all group border-none">
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-gray-300 font-bold text-lg border border-gray-600 group-hover:border-indigo-500/50 transition-colors">
                                         {patient.name.charAt(0)}
